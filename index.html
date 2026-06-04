@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MangaVault — Your Personal Manga Library</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #08080f;
+  --bg-secondary: #10101e;
+  --bg-card: #14141f;
+  --bg-card-hover: #1a1a2e;
+  --accent-purple: #7c3aed;
+  --accent-purple-light: #9d5ff0;
+  --accent-cyan: #06b6d4;
+  --accent-pink: #ec4899;
+  --text-primary: #f0f0f5;
+  --text-secondary: #94a3b8;
+  --text-muted: #4a5568;
+  --border: #1e1e35;
+  --border-light: #2a2a45;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Navigation ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(8,8,15,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  gap: 8px;
+}
+
+.nav-logo {
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent-purple-light), var(--accent-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-right: 16px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-tabs { display: flex; gap: 4px; flex: 1; overflow-x: auto; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.nav-tab:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-tab.active {
+  background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.1));
+  color: var(--accent-purple-light);
+  border: 1px solid rgba(124,58,237,0.3);
+}
+.nav-lib-count {
+  background: var(--accent-purple);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ── Layout ── */
+main {
+  margin-top: 64px;
+  padding: 32px 24px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Section headers ── */
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.section-accent { width: 4px; height: 28px; background: linear-gradient(180deg, var(--accent-purple), var(--accent-cyan)); border-radius: 2px; flex-shrink: 0; }
+.section-title { font-size: 20px; font-weight: 700; }
+.section-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ── Manga Grid ── */
+.manga-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.manga-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.manga-card:hover { transform: translateY(-4px); border-color: var(--accent-purple); box-shadow: 0 8px 32px rgba(124,58,237,0.2); }
+
+.manga-cover { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
+.manga-cover-placeholder {
+  width: 100%; aspect-ratio: 2/3;
+  background: linear-gradient(135deg, #1a1a2e, #2d2d4e);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; color: var(--text-muted);
+}
+
+.manga-info { padding: 10px; }
+.manga-title {
+  font-size: 12px; font-weight: 600; line-height: 1.4; margin-bottom: 6px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.manga-meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.manga-score { font-size: 11px; font-weight: 700; color: var(--warning); }
+
+.status-badge { font-size: 9px; padding: 2px 5px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+.status-RELEASING  { background: rgba(16,185,129,0.15); color: #10b981; }
+.status-FINISHED   { background: rgba(6,182,212,0.15);  color: #06b6d4; }
+.status-HIATUS     { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.status-CANCELLED  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.status-NOT_YET_RELEASED { background: rgba(148,163,184,0.15); color: #94a3b8; }
+
+.type-badge {
+  position: absolute; top: 8px; left: 8px;
+  font-size: 9px; padding: 2px 5px; border-radius: 4px; font-weight: 700; text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+.type-JP { background: rgba(124,58,237,0.85); color: white; }
+.type-KR { background: rgba(6,182,212,0.85);  color: white; }
+.type-CN { background: rgba(236,72,153,0.85); color: white; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 8px 16px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent-purple); color: white; }
+.btn-primary:hover { background: var(--accent-purple-light); transform: translateY(-1px); }
+.btn-secondary { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-light); }
+.btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.btn-danger { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background: rgba(239,68,68,0.22); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+
+/* ── Search ── */
+.search-wrapper { max-width: 700px; margin: 0 auto 28px; }
+.search-input-row { position: relative; }
+.search-input {
+  width: 100%; padding: 15px 52px 15px 20px;
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius); color: var(--text-primary); font-size: 15px;
+  outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--accent-purple); }
+.search-input::placeholder { color: var(--text-muted); }
+.search-go {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: var(--accent-purple); border: none; border-radius: var(--radius-sm);
+  padding: 8px 12px; cursor: pointer; font-size: 15px; transition: background 0.2s;
+}
+.search-go:hover { background: var(--accent-purple-light); }
+.search-hint { font-size: 12px; color: var(--text-muted); margin-top: 8px; text-align: center; }
+
+/* ── Genre Pills ── */
+.pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+.pill {
+  padding: 5px 13px; border-radius: 20px; font-size: 12px; cursor: pointer;
+  border: 1px solid var(--border-light); background: var(--bg-card);
+  color: var(--text-secondary); transition: all 0.2s;
+}
+.pill:hover { border-color: var(--accent-purple); color: var(--text-primary); }
+.pill.active { background: rgba(124,58,237,0.18); border-color: var(--accent-purple); color: var(--accent-purple-light); }
+
+/* ── Modal ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(5px);
+  z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.overlay.hidden { display: none; }
+
+.modal {
+  background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-light);
+  width: 100%; max-width: 740px; max-height: 88vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+}
+.modal::-webkit-scrollbar { width: 6px; }
+.modal::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+.modal-header { display: flex; gap: 20px; padding: 24px; border-bottom: 1px solid var(--border); }
+.modal-cover { width: 120px; height: 180px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+.modal-cover-ph {
+  width: 120px; height: 180px; background: var(--bg-card); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 42px; flex-shrink: 0;
+}
+.modal-meta { flex: 1; min-width: 0; }
+.modal-title { font-size: 20px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
+.modal-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+.modal-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.genre-tag { font-size: 11px; padding: 2px 7px; background: rgba(124,58,237,0.13); color: var(--accent-purple-light); border-radius: 4px; border: 1px solid rgba(124,58,237,0.2); }
+.tag-cyan { background: rgba(6,182,212,0.1); color: var(--accent-cyan); border-color: rgba(6,182,212,0.2); }
+
+.modal-stats { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
+.modal-stat { display: flex; flex-direction: column; gap: 2px; }
+.modal-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.modal-stat-value { font-size: 13px; font-weight: 600; }
+
+.modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.modal-body { padding: 20px 24px; }
+.modal-description { font-size: 14px; line-height: 1.75; color: var(--text-secondary); }
+
+/* ── Add Modal ── */
+.add-modal {
+  background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-light);
+  width: 100%; max-width: 400px; padding: 24px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+}
+.add-modal h3 { font-size: 18px; margin-bottom: 6px; }
+.add-modal-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.status-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.status-opt {
+  padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 10px; font-size: 14px;
+}
+.status-opt:hover { border-color: var(--accent-purple); background: rgba(124,58,237,0.08); }
+.status-opt.selected { border-color: var(--accent-purple); background: rgba(124,58,237,0.15); color: var(--accent-purple-light); font-weight: 600; }
+
+/* ── Stars ── */
+.stars { display: flex; gap: 3px; }
+.star { font-size: 18px; cursor: pointer; color: var(--text-muted); transition: color 0.1s; user-select: none; }
+.star.active { color: var(--warning); }
+.star:hover { color: var(--warning); }
+
+/* ── Library ── */
+.lib-tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.lib-tab {
+  padding: 10px 18px; cursor: pointer; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+}
+.lib-tab:hover { color: var(--text-primary); }
+.lib-tab.active { color: var(--accent-purple-light); border-bottom-color: var(--accent-purple); }
+.lib-count {
+  background: var(--bg-card); color: var(--text-secondary); font-size: 10px;
+  padding: 1px 6px; border-radius: 8px; border: 1px solid var(--border);
+}
+.lib-tab.active .lib-count { background: rgba(124,58,237,0.18); color: var(--accent-purple-light); border-color: rgba(124,58,237,0.3); }
+
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+
+.lib-card {
+  background: var(--bg-card); border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); transition: all 0.2s; position: relative;
+}
+.lib-card:hover { border-color: var(--accent-purple); box-shadow: 0 4px 20px rgba(124,58,237,0.15); }
+.lib-card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; cursor: pointer; }
+.lib-card-body { padding: 10px; }
+.lib-card-title {
+  font-size: 12px; font-weight: 600; margin-bottom: 8px; cursor: pointer;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.lib-card-actions { display: flex; align-items: center; gap: 4px; }
+.lib-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; padding: 3px; border-radius: 4px; transition: color 0.2s; margin-left: auto; }
+.lib-del:hover { color: var(--danger); }
+
+/* ── Recommendations ── */
+.rec-grid { display: flex; flex-direction: column; gap: 12px; }
+.rec-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  display: flex; gap: 16px; padding: 14px; cursor: pointer; transition: all 0.2s;
+}
+.rec-card:hover { border-color: var(--accent-purple); background: var(--bg-card-hover); }
+.rec-cover { width: 72px; height: 108px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.rec-cover-ph {
+  width: 72px; height: 108px; background: var(--bg-primary); border-radius: 6px;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px;
+}
+.rec-info { flex: 1; min-width: 0; }
+.rec-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rec-reason { font-size: 12px; color: var(--accent-cyan); margin-bottom: 7px; font-style: italic; }
+.rec-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.rec-footer { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ── Tier Lists ── */
+.tier-posts { display: flex; flex-direction: column; gap: 12px; }
+.tier-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; display: flex; gap: 14px; cursor: pointer; transition: all 0.2s;
+  text-decoration: none; color: inherit;
+}
+.tier-card:hover { border-color: var(--accent-purple); background: var(--bg-card-hover); }
+.tier-thumb { width: 80px; height: 58px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.tier-thumb-ph {
+  width: 80px; height: 58px; background: var(--bg-primary); border-radius: 6px;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 26px;
+}
+.tier-post-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; line-height: 1.4; }
+.tier-post-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.tier-sub { color: var(--accent-cyan); font-weight: 600; }
+
+/* ── Preferences ── */
+.pref-section { margin-bottom: 32px; }
+.pref-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.pref-title-note { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+.genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 7px; }
+.genre-item {
+  display: flex; align-items: center; gap: 9px; padding: 9px 11px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s;
+  user-select: none;
+}
+.genre-item:hover { border-color: var(--border-light); }
+.genre-item.liked { border-color: var(--accent-purple); background: rgba(124,58,237,0.1); }
+.genre-item.disliked { border-color: var(--danger); background: rgba(239,68,68,0.08); }
+.genre-check {
+  width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--border-light);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
+}
+.liked .genre-check { background: var(--accent-purple); border-color: var(--accent-purple); color: white; }
+.disliked .genre-check { background: var(--danger); border-color: var(--danger); color: white; }
+.genre-emoji { font-size: 15px; }
+.genre-name { font-size: 12px; }
+
+/* ── Discover Hero ── */
+.hero {
+  background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08));
+  border: 1px solid rgba(124,58,237,0.2); border-radius: 16px;
+  padding: 36px; margin-bottom: 40px; text-align: center;
+}
+.hero h1 {
+  font-size: 30px; font-weight: 800; margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--accent-purple-light), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p { color: var(--text-secondary); font-size: 15px; }
+
+/* ── States ── */
+.loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); grid-column: 1/-1; }
+.spin { display: inline-block; font-size: 28px; animation: spin 0.8s linear infinite; margin-bottom: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); grid-column: 1/-1; }
+.empty-icon { font-size: 44px; display: block; margin-bottom: 14px; }
+.empty-title { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 7px; }
+.empty-sub { font-size: 13px; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+  padding: 12px 18px; font-size: 13px; z-index: 300;
+  transform: translateY(80px); opacity: 0; transition: all 0.3s;
+  box-shadow: var(--shadow); max-width: 300px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error   { border-left: 3px solid var(--danger); }
+.toast.info    { border-left: 3px solid var(--accent-cyan); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Similar manga in modal ── */
+.modal-similar-wrap { margin-top: 24px; }
+.modal-similar-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; }
+.modal-similar-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+.modal-similar-scroll::-webkit-scrollbar { height: 4px; }
+.modal-similar-scroll::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+.sim-card { flex-shrink: 0; width: 90px; cursor: pointer; transition: transform 0.15s; }
+.sim-card:hover { transform: translateY(-3px); }
+.sim-cover { width: 90px; height: 130px; object-fit: cover; border-radius: 6px; display: block; border: 1px solid var(--border); }
+.sim-cover-ph { width: 90px; height: 130px; background: var(--bg-card); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid var(--border); }
+.sim-title { font-size: 11px; color: var(--text-secondary); margin-top: 5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ── Info badges ── */
+.info-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.badge-color { background: rgba(236,72,153,0.12); color: #ec4899; border: 1px solid rgba(236,72,153,0.2); }
+.badge-bw    { background: rgba(148,163,184,0.1);  color: var(--text-secondary); border: 1px solid var(--border-light); }
+.badge-en    { background: rgba(16,185,129,0.12);  color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+
+/* ── See All / Browse All ── */
+.see-all-btn {
+  margin-left: auto; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-light);
+  background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
+  font-size: 12px; font-weight: 600; transition: all 0.2s; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+.see-all-btn:hover { border-color: var(--accent-purple); color: var(--accent-purple-light); background: rgba(124,58,237,0.1); }
+
+.browse-back {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+  padding-bottom: 20px; border-bottom: 1px solid var(--border);
+}
+.browse-back-btn {
+  padding: 8px 16px; background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer;
+  font-size: 13px; font-weight: 600; transition: all 0.2s; flex-shrink: 0;
+}
+.browse-back-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+.load-more-wrap { text-align: center; margin-top: 36px; padding-bottom: 24px; }
+.load-more-btn {
+  padding: 12px 36px; border-radius: 24px; background: var(--bg-card);
+  border: 1px solid var(--border-light); color: var(--text-secondary);
+  cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s;
+}
+.load-more-btn:hover { border-color: var(--accent-purple); color: var(--accent-purple-light); background: rgba(124,58,237,0.1); }
+.load-more-btn:disabled { opacity: 0.5; cursor: default; }
+
+.source-badge {
+  font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 700;
+  background: rgba(6,182,212,0.15); color: var(--accent-cyan); position: absolute;
+  top: 8px; right: 8px;
+}
+
+/* ── Update notifications ── */
+.updates-banner {
+  background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(124,58,237,0.08));
+  border: 1px solid rgba(6,182,212,0.25); border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 24px;
+}
+.updates-banner-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.updates-banner-title { font-size: 14px; font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px; }
+.updates-list { display: flex; flex-direction: column; gap: 10px; }
+.update-row {
+  display: flex; align-items: center; gap: 12px; padding: 8px 10px;
+  background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border);
+  cursor: pointer; transition: border-color 0.2s;
+}
+.update-row:hover { border-color: var(--accent-cyan); }
+.update-thumb { width: 36px; height: 52px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+.update-thumb-ph { width: 36px; height: 52px; background: var(--bg-primary); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.update-info { flex: 1; min-width: 0; }
+.update-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.update-msg { font-size: 11px; color: var(--accent-cyan); }
+.notif-dot {
+  width: 8px; height: 8px; background: var(--accent-cyan); border-radius: 50%;
+  display: inline-block; margin-left: 4px; flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  nav { padding: 0 10px; gap: 4px; }
+  main { padding: 20px 12px; }
+  .nav-logo { font-size: 16px; margin-right: 6px; }
+  .tab-label { display: none; }
+  .manga-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .modal-header { flex-direction: column; }
+  .modal-cover, .modal-cover-ph { width: 100%; height: 180px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="nav-logo">📚 MangaVault</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('discover')" data-tab="discover">🔭 <span class="tab-label">Discover</span></button>
+    <button class="nav-tab" onclick="switchTab('search')"   data-tab="search">🔍 <span class="tab-label">Search</span></button>
+    <button class="nav-tab" onclick="switchTab('library')"  data-tab="library">📖 <span class="tab-label">Library</span> <span class="nav-lib-count" id="nav-count">0</span><span class="notif-dot" id="nav-notif-dot" style="display:none;"></span></button>
+    <button class="nav-tab" onclick="switchTab('tierlists')" data-tab="tierlists">🏆 <span class="tab-label">Tier Lists</span></button>
+    <button class="nav-tab" onclick="switchTab('prefs')"    data-tab="prefs">⚙️ <span class="tab-label">Preferences</span></button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ── DISCOVER ── -->
+  <div id="tab-discover" class="tab-content active">
+
+    <!-- Browse-All sub-view (hidden until "See All" is clicked) -->
+    <div id="browse-all" style="display:none;">
+      <div class="browse-back">
+        <button class="browse-back-btn" onclick="hideBrowseAll()">← Back</button>
+        <div>
+          <div class="section-title" id="browse-title">Trending</div>
+          <div class="section-subtitle" id="browse-subtitle"></div>
+        </div>
+      </div>
+      <div id="browse-grid" class="manga-grid"></div>
+      <div class="load-more-wrap" id="browse-footer" style="display:none;">
+        <button class="load-more-btn" id="browse-load-more" onclick="loadMoreBrowse()">Load More</button>
+      </div>
+    </div>
+
+    <!-- Main discover content -->
+    <div id="discover-main">
+      <div class="hero">
+        <h1>Your Manga Universe</h1>
+        <p>Discover, track, and explore manga & manhwa — all in one place.</p>
+      </div>
+
+      <div id="rec-section" style="display:none; margin-bottom:40px;">
+        <div class="section-header">
+          <div class="section-accent"></div>
+          <div>
+            <div class="section-title">✨ Recommended For You</div>
+            <div class="section-subtitle">Based on your library & preferences</div>
+          </div>
+          <button class="see-all-btn" onclick="showBrowseAll('recs')">See All →</button>
+        </div>
+        <div class="rec-grid" id="rec-list"></div>
+      </div>
+
+      <div style="margin-bottom:40px;">
+        <div class="section-header">
+          <div class="section-accent"></div>
+          <div><div class="section-title">🔥 Trending</div><div class="section-subtitle">Most popular right now</div></div>
+          <button class="see-all-btn" onclick="showBrowseAll('trending')">See All →</button>
+        </div>
+        <div id="trending-grid" class="manga-grid"><div class="loading"><div class="spin">⏳</div>Loading...</div></div>
+      </div>
+
+      <div>
+        <div class="section-header">
+          <div class="section-accent"></div>
+          <div><div class="section-title">💎 Hidden Gems</div><div class="section-subtitle">High-quality titles you've probably never heard of</div></div>
+          <button class="see-all-btn" onclick="showBrowseAll('gems')">See All →</button>
+        </div>
+        <div id="gems-grid" class="manga-grid"><div class="loading"><div class="spin">⏳</div>Loading...</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── SEARCH ── -->
+  <div id="tab-search" class="tab-content">
+    <div class="search-wrapper">
+      <div class="search-input-row">
+        <input type="text" class="search-input" id="search-input"
+          placeholder="Describe what you want… e.g. &quot;dark revenge manhwa with op mc&quot; or &quot;slow romance slice of life&quot;"
+          onkeydown="if(event.key==='Enter') doSearch()">
+        <button class="search-go" onclick="doSearch()">🔍</button>
+      </div>
+      <div class="search-hint">💡 Use natural language — themes, genres, tropes, feelings, country of origin</div>
+    </div>
+
+    <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Filter by genre:</div>
+    <div class="pills" id="search-genre-pills"></div>
+
+    <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px; margin-top:4px;">Filter by theme / tag:</div>
+    <div class="pills" id="search-tag-pills" style="margin-bottom:16px;"></div>
+
+    <div class="pills" style="margin-bottom:24px;">
+      <button class="pill active" data-type="all" onclick="setTypeFilter('all',this)">All Types</button>
+      <button class="pill" data-type="JP"  onclick="setTypeFilter('JP',this)">🇯🇵 Manga</button>
+      <button class="pill" data-type="KR"  onclick="setTypeFilter('KR',this)">🇰🇷 Manhwa</button>
+      <button class="pill" data-type="CN"  onclick="setTypeFilter('CN',this)">🇨🇳 Manhua</button>
+    </div>
+
+    <div id="search-results" class="manga-grid">
+      <div class="empty" style="grid-column:1/-1">
+        <span class="empty-icon">🔍</span>
+        <div class="empty-title">Search for anything</div>
+        <div class="empty-sub">Describe what you feel like reading, or tap a genre above</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LIBRARY ── -->
+  <div id="tab-library" class="tab-content">
+    <!-- Update notifications banner (hidden until updates found) -->
+    <div class="updates-banner" id="updates-banner" style="display:none;">
+      <div class="updates-banner-header">
+        <div class="updates-banner-title">🔔 New Updates in Your Library</div>
+        <button class="btn btn-secondary btn-sm" onclick="markUpdatesAsSeen()">Mark all seen</button>
+      </div>
+      <div class="updates-list" id="updates-list"></div>
+    </div>
+
+    <div class="lib-tabs">
+      <button class="lib-tab active" onclick="switchLibTab('reading',this)">📖 Reading <span class="lib-count" id="cnt-reading">0</span></button>
+      <button class="lib-tab" onclick="switchLibTab('planToRead',this)">🔖 Plan to Read <span class="lib-count" id="cnt-planToRead">0</span></button>
+      <button class="lib-tab" onclick="switchLibTab('completed',this)">✅ Completed <span class="lib-count" id="cnt-completed">0</span></button>
+    </div>
+    <div id="lib-reading"    class="lib-grid"></div>
+    <div id="lib-planToRead" class="lib-grid" style="display:none;"></div>
+    <div id="lib-completed"  class="lib-grid" style="display:none;"></div>
+  </div>
+
+  <!-- ── TIER LISTS ── -->
+  <div id="tab-tierlists" class="tab-content">
+    <div class="section-header">
+      <div class="section-accent"></div>
+      <div><div class="section-title">🏆 Community Tier Lists</div><div class="section-subtitle">Browse what others are ranking to find your next read</div></div>
+    </div>
+    <div class="pills" style="margin-bottom:24px;">
+      <button class="pill active" onclick="loadTierLists('manga',this)">Reddit r/manga</button>
+      <button class="pill" onclick="loadTierLists('manhwa',this)">Reddit r/manhwa</button>
+      <button class="pill" onclick="loadTierLists('anilist',this)">AniList Top Ranked</button>
+    </div>
+    <div id="tier-content"><div class="loading"><div class="spin">⏳</div>Loading tier lists...</div></div>
+  </div>
+
+  <!-- ── PREFERENCES ── -->
+  <div id="tab-prefs" class="tab-content">
+    <div class="section-header" style="margin-bottom:28px;">
+      <div class="section-accent"></div>
+      <div><div class="section-title">⚙️ Preferences</div><div class="section-subtitle">Tune your genre tastes for better recommendations</div></div>
+    </div>
+
+    <div class="pref-section">
+      <div class="pref-title">💜 Genres I Love <span class="pref-title-note">(click to toggle — used for recommendations)</span></div>
+      <div class="genre-grid" id="pref-liked"></div>
+    </div>
+
+    <div class="pref-section">
+      <div class="pref-title">🚫 Genres I Dislike <span class="pref-title-note">(optional — filters out unwanted content)</span></div>
+      <div class="genre-grid" id="pref-disliked"></div>
+    </div>
+
+    <div class="pref-section">
+      <div class="pref-title">📊 My Stats</div>
+      <div id="pref-stats" style="font-size:14px; color:var(--text-secondary); line-height:2;"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="savePrefs()">💾 Save & Refresh Recommendations</button>
+
+    <div class="pref-section" style="margin-top:36px;">
+      <div class="pref-title">💾 Backup & Restore</div>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px; line-height:1.6;">
+        Your library is saved in your browser automatically. Export a backup file so you don't lose it if your browser clears site data, or to move it to another device.
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-primary" onclick="exportLibrary()">⬇️ Export Backup</button>
+        <label class="btn btn-secondary" style="cursor:pointer;">
+          ⬆️ Import Backup
+          <input type="file" accept=".json" onchange="importLibrary(event)" style="display:none;">
+        </label>
+      </div>
+      <div style="font-size:12px; color:var(--text-muted); margin-top:12px;">
+        💡 Tip: if your browser clears data when you close it, export a backup and re-import it each time — or disable "Clear cookies on close" in your browser settings.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Manga Detail Modal ── -->
+<div class="overlay hidden" id="manga-overlay" onclick="closeDetailModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div id="modal-header"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Add to Library Modal ── -->
+<div class="overlay hidden" id="add-overlay" onclick="closeAddModal(event)">
+  <div class="add-modal" onclick="event.stopPropagation()">
+    <h3>📚 Add to Library</h3>
+    <div class="add-modal-subtitle" id="add-title-preview"></div>
+    <div class="status-options">
+      <div class="status-opt" id="opt-reading"    onclick="pickStatus('reading')">📖 Currently Reading</div>
+      <div class="status-opt" id="opt-planToRead" onclick="pickStatus('planToRead')">🔖 Plan to Read</div>
+      <div class="status-opt" id="opt-completed"  onclick="pickStatus('completed')">✅ Completed</div>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary"   onclick="confirmAdd()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════════════
+
+const ANILIST = 'https://graphql.anilist.co';
+const STORE   = 'mangavault_v3';
+
+const GENRES = [
+  {name:'Action',emoji:'⚔️'},{name:'Adventure',emoji:'🗺️'},{name:'Comedy',emoji:'😂'},
+  {name:'Drama',emoji:'🎭'},{name:'Ecchi',emoji:'😳'},{name:'Fantasy',emoji:'🧙'},
+  {name:'Horror',emoji:'👻'},{name:'Mahou Shoujo',emoji:'✨'},{name:'Mecha',emoji:'🤖'},
+  {name:'Music',emoji:'🎵'},{name:'Mystery',emoji:'🕵️'},{name:'Psychological',emoji:'🧠'},
+  {name:'Romance',emoji:'💕'},{name:'Sci-Fi',emoji:'🚀'},{name:'Slice of Life',emoji:'☕'},
+  {name:'Sports',emoji:'⚽'},{name:'Supernatural',emoji:'👁️'},{name:'Thriller',emoji:'🔪'},
+];
+
+const TAGS = [
+  // Power / Class
+  {name:'Overpowered Main Character',emoji:'💪'},{name:'Cultivation',emoji:'🌿'},
+  {name:'Martial Arts',emoji:'🥋'},{name:'Necromancy',emoji:'💀'},
+  {name:'Magic',emoji:'🪄'},{name:'Sword & Magic',emoji:'⚔️'},
+  {name:'Mana',emoji:'🔵'},{name:'Alchemy',emoji:'⚗️'},
+  {name:'Shapeshifting',emoji:'🐉'},{name:'Superpower',emoji:'✨'},
+  // Tropes
+  {name:'Isekai',emoji:'🌀'},{name:'Reincarnation',emoji:'♻️'},
+  {name:'Regression',emoji:'🔄'},{name:'Time Travel',emoji:'⏱️'},
+  {name:'Transmigration',emoji:'🌐'},{name:'Second Chance',emoji:'⏪'},
+  {name:'Revenge',emoji:'😤'},{name:'Villainess',emoji:'👑'},
+  {name:'Harem',emoji:'💘'},{name:'Arranged Marriage',emoji:'💍'},
+  // World / Setting
+  {name:'Dungeons',emoji:'🏰'},{name:'Tower',emoji:'🗼'},
+  {name:'System',emoji:'💻'},{name:'Game Elements',emoji:'🎮'},
+  {name:'Virtual Reality',emoji:'🥽'},{name:'Post-Apocalyptic',emoji:'☢️'},
+  {name:'Historical',emoji:'📜'},{name:'Military',emoji:'🎖️'},
+  {name:'Space',emoji:'🌌'},{name:'Survival',emoji:'🏕️'},
+  {name:'Kingdom Building',emoji:'🏯'},{name:'Guild',emoji:'🛡️'},
+  {name:'Hunter',emoji:'🗡️'},{name:'Academy',emoji:'🏫'},
+  // Creatures / Dark
+  {name:'Demons',emoji:'😈'},{name:'Vampires',emoji:'🧛'},
+  {name:'Dragons',emoji:'🐲'},{name:'Monsters',emoji:'👾'},
+  {name:'Zombies',emoji:'🧟'},{name:'Dark Fantasy',emoji:'🌑'},
+  {name:'Horror',emoji:'👻'},{name:'Tragedy',emoji:'💔'},
+  // Characters
+  {name:'Female Protagonist',emoji:'👩'},{name:'Assassins',emoji:'🗡️'},
+  {name:'Anti-Hero',emoji:'😈'},{name:'Genius Protagonist',emoji:'🧠'},
+  {name:'Non-Human Protagonist',emoji:'🐺'},{name:'School',emoji:'🏫'},
+  // Slice / Romance
+  {name:'Cooking',emoji:'🍳'},{name:'Medical',emoji:'🏥'},
+  {name:'Slice of Life',emoji:'☕'},{name:'Office Workers',emoji:'💼'},
+];
+
+// ── Stop words stripped before title search ──────────────────────
+const STOP_WORDS = new Set([
+  'a','an','the','is','are','was','were','be','been','being','have','has','had',
+  'do','does','did','will','would','could','should','may','might','must','shall',
+  'can','get','make','take','give','know','think','see','come','go','say','find',
+  'want','use','try','show','keep','let','turn','become','where','how','what',
+  'who','which','their','his','her','its','our','your','my','they','he','she',
+  'it','we','you','i','me','him','us','there','here','just','also','very','so',
+  'too','even','still','yet','again','then','now','only','some','such','no',
+  'not','nor','all','any','more','every','either','one','two','three','about',
+  'at','in','on','to','for','from','with','by','as','while','when','and','or',
+  'but','if','that','this','these','those','of','up','into','out','over','after',
+  'before','between','through','during','around','along','other','both','same',
+  'each','many','another','been','being','itself','them','they','than','then',
+  'public','people','someone','everyone','anyone','something','anything','nothing',
+]);
+
+// Extract meaningful keywords from a description (remove stop words)
+function extractSearchTerms(text) {
+  return text.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !STOP_WORDS.has(w))
+    .slice(0, 6);
+}
+
+// Huge concept → tag/genre mapping for descriptive searches
+const NL_MAP = {
+  // ── Dark / tone ──
+  'dark':['Dark Fantasy','Horror','Psychological','Thriller'],
+  'gritty':['Dark Fantasy','Psychological','Thriller'],
+  'sad':['Drama','Tragedy'],'emotional':['Drama','Tragedy'],
+  'depressing':['Drama','Tragedy'],'tragic':['Tragedy'],
+  'mature':['Drama','Psychological'],'serious':['Drama'],
+  'light':['Comedy','Slice of Life','Romance'],
+  'fun':['Comedy'],'funny':['Comedy'],'humor':['Comedy'],
+  'wholesome':['Slice of Life','Romance','Comedy'],
+
+  // ── Genres ──
+  'romance':['Romance'],'love':['Romance'],'crush':['Romance'],
+  'relationship':['Romance','Drama'],'couple':['Romance'],
+  'action':['Action'],'fight':['Action','Martial Arts'],
+  'battle':['Action','Martial Arts'],'combat':['Action'],
+  'war':['Military','Action'],'army':['Military'],
+  'fantasy':['Fantasy'],'magic':['Fantasy','Magic'],
+  'magical':['Fantasy','Magic'],'spell':['Fantasy','Magic'],
+  'horror':['Horror'],'scary':['Horror'],'fear':['Horror'],
+  'creepy':['Horror','Psychological'],'terror':['Horror'],
+  'mystery':['Mystery','Thriller'],'detective':['Mystery'],
+  'investigate':['Mystery'],'crime':['Mystery','Thriller'],
+  'thriller':['Thriller'],'suspense':['Thriller'],
+  'sci-fi':['Sci-Fi'],'science':['Sci-Fi'],'technology':['Sci-Fi'],
+  'space':['Sci-Fi','Space'],'robot':['Mecha','Sci-Fi'],
+  'mecha':['Mecha'],'sports':['Sports'],
+  'cooking':['Cooking'],'food':['Cooking'],'chef':['Cooking'],
+  'medical':['Medical'],'doctor':['Medical'],'hospital':['Medical'],
+  'psychological':['Psychological'],'mind':['Psychological'],
+  'supernatural':['Supernatural'],'ghost':['Supernatural','Horror'],
+  'spirit':['Supernatural'],'esper':['Supernatural','Superpower'],
+
+  // ── Power / awakening tropes (key for manhwa searches) ──
+  'awaken':['System','Overpowered Main Character','Fantasy','Hunter'],
+  'awakening':['System','Overpowered Main Character','Fantasy','Hunter'],
+  'awakened':['System','Overpowered Main Character','Fantasy'],
+  'ceremony':['System','School','Fantasy','Supernatural'],
+  'ability':['Superpower','System','Fantasy'],
+  'abilities':['Superpower','System','Fantasy'],
+  'power':['Superpower','Action','System'],
+  'powers':['Superpower','System'],
+  'special power':['Superpower','System'],
+  'talent':['System','Overpowered Main Character'],
+  'gifted':['Overpowered Main Character','System'],
+  'rank':['Hunter','System'],'ranked':['Hunter','System'],
+  'level':['System','Game Elements'],'level up':['System','Game Elements'],
+  'stat':['System','Game Elements'],'stats':['System','Game Elements'],
+  'skill':['System','Game Elements'],'skills':['System','Game Elements'],
+  'class':['School','System','Game Elements'],
+  'job':['System','Game Elements'],'job class':['System','Game Elements'],
+  'mana':['Magic','System','Fantasy'],'mp':['System','Game Elements'],
+  'hp':['System','Game Elements'],'health point':['System'],
+  'xp':['System','Game Elements'],'exp':['System','Game Elements'],
+  'quest':['Game Elements','Fantasy','Dungeons'],
+  'achievement':['System','Game Elements'],
+  'solo':['Overpowered Main Character'],'op':['Overpowered Main Character'],
+  'overpowered':['Overpowered Main Character'],
+  'strongest':['Overpowered Main Character','Action'],
+  'god':['Overpowered Main Character','Fantasy','Supernatural'],
+  'cheat':['Overpowered Main Character','System'],
+  'hidden':['Overpowered Main Character'],'secret':['Overpowered Main Character'],
+
+  // ── School / academy ──
+  'school':['School','Academy'],'student':['School','Academy'],
+  'students':['School','Academy'],'class':['School'],
+  'classroom':['School'],'teacher':['School'],
+  'academy':['Academy','School','Fantasy'],
+  'magic school':['Academy','Fantasy','Magic'],
+  'magic academy':['Academy','Fantasy','Magic'],
+
+  // ── Dungeon / hunter ──
+  'dungeon':['Dungeons','Hunter','Fantasy'],
+  'dungeons':['Dungeons','Hunter'],
+  'gate':['Dungeons','Hunter'],'portal':['Dungeons','Isekai'],
+  'raid':['Dungeons','Hunter'],'boss':['Dungeons','Game Elements'],
+  'monster':['Monsters','Dungeons'],'monsters':['Monsters','Dungeons'],
+  'hunter':['Hunter','Dungeons','Action'],
+  'hunters':['Hunter','Dungeons'],'guild':['Guild','Hunter'],
+  'party':['Dungeons','Fantasy'],'team':['Action','Fantasy'],
+  'tower':['Tower','Dungeons'],'floor':['Tower','Dungeons'],
+  'labyrinth':['Dungeons','Fantasy'],'maze':['Dungeons'],
+
+  // ── Isekai / reincarnation ──
+  'isekai':['Isekai','Fantasy'],'transported':['Isekai'],
+  'another world':['Isekai','Fantasy'],
+  'different world':['Isekai','Fantasy'],
+  'fantasy world':['Isekai','Fantasy'],
+  'reincarnated':['Reincarnation','Isekai'],
+  'reincarnation':['Reincarnation'],'rebirth':['Reincarnation','Regression'],
+  'reborn':['Reincarnation','Regression'],
+  'second chance':['Regression','Reincarnation'],
+  'transmigrate':['Transmigration','Reincarnation'],
+  'transmigration':['Transmigration','Isekai'],
+  'possesses':['Transmigration','Isekai'],
+  'regression':['Regression','Time Travel'],
+  'regressed':['Regression'],'go back':['Regression','Time Travel'],
+  'return':['Regression','Time Travel'],'restart':['Regression'],
+  'time travel':['Time Travel','Regression'],
+
+  // ── Cultivation / martial arts ──
+  'cultivation':['Cultivation','Martial Arts'],
+  'cultivate':['Cultivation'],'cultivator':['Cultivation'],
+  'martial':['Martial Arts'],'martial arts':['Martial Arts'],
+  'wuxia':['Martial Arts','Cultivation','Historical'],
+  'xianxia':['Cultivation','Fantasy'],'xuanhuan':['Cultivation','Fantasy'],
+  'murim':['Martial Arts','Historical'],
+  'dantian':['Cultivation'],'qi':['Cultivation'],
+  'dao':['Cultivation'],'tao':['Cultivation'],
+  'sect':['Cultivation','Historical'],
+  'breakthrough':['Cultivation','System'],
+  'pill':['Cultivation','Alchemy'],
+  'alchemy':['Alchemy','Cultivation'],
+  'refine':['Cultivation','Alchemy'],
+  'realm':['Cultivation','Fantasy'],
+
+  // ── Kingdom / nobility ──
+  'kingdom':['Kingdom Building','Historical','Fantasy'],
+  'emperor':['Historical','Kingdom Building'],
+  'king':['Historical','Kingdom Building','Fantasy'],
+  'noble':['Historical','Villainess','Romance'],
+  'nobility':['Historical','Villainess'],
+  'lord':['Historical','Kingdom Building','Fantasy'],
+  'duke':['Historical','Villainess','Romance'],
+  'prince':['Historical','Romance','Fantasy'],
+  'princess':['Historical','Romance','Fantasy'],
+  'villainess':['Villainess','Romance'],
+  'villain':['Villainess','Dark Fantasy'],
+  'aristocrat':['Historical','Villainess'],
+  'knight':['Historical','Action','Fantasy'],
+  'royalty':['Historical','Romance','Fantasy'],
+
+  // ── Dark creatures ──
+  'demon':['Demons','Supernatural'],'demons':['Demons'],
+  'devil':['Demons','Supernatural'],'undead':['Necromancy'],
+  'necromancer':['Necromancy','Dark Fantasy'],
+  'necromancy':['Necromancy'],'skeleton':['Necromancy'],
+  'vampire':['Vampires','Supernatural'],'werewolf':['Supernatural'],
+  'zombie':['Zombies','Horror'],'dragon':['Dragons','Fantasy'],
+  'dragons':['Dragons'],'beast':['Fantasy','Action'],
+  'elves':['Fantasy'],'elf':['Fantasy'],
+  'orc':['Fantasy','Action'],'dwarves':['Fantasy'],
+
+  // ── Assassin / spy ──
+  'assassin':['Assassins','Action'],'assassins':['Assassins'],
+  'killer':['Assassins','Thriller'],'hitman':['Assassins','Action'],
+  'spy':['Thriller','Action'],'agent':['Thriller','Action'],
+  'mercenary':['Action','Military'],
+
+  // ── Apocalypse / survival ──
+  'apocalypse':['Post-Apocalyptic','Horror'],
+  'post-apocalyptic':['Post-Apocalyptic'],
+  'survive':['Survival','Post-Apocalyptic'],
+  'survival':['Survival'],'survivor':['Survival','Post-Apocalyptic'],
+  'wasteland':['Post-Apocalyptic'],'collapse':['Post-Apocalyptic'],
+
+  // ── Misc ──
+  'historical':['Historical'],'ancient':['Historical'],
+  'military':['Military'],'soldier':['Military'],
+  'female':['Female Protagonist'],'girl':['Female Protagonist'],
+  'harem':['Harem'],'arranged marriage':['Arranged Marriage','Romance'],
+  'virtual reality':['Virtual Reality'],'vr':['Virtual Reality'],
+  'game':['Game Elements','Virtual Reality'],
+  'slice of life':['Slice of Life'],'daily life':['Slice of Life'],
+  'office':['Office Workers','Slice of Life'],
+  'revenge':['Revenge'],'vengeance':['Revenge'],
+  'genius':['Genius Protagonist','Overpowered Main Character'],
+  'prodigy':['Genius Protagonist'],'smart':['Genius Protagonist'],
+};
+
+// Multi-word phrase check (run before single-word NL_MAP)
+const NL_PHRASES = [
+  ['another world',    ['Isekai','Fantasy']],
+  ['different world',  ['Isekai','Fantasy']],
+  ['fantasy world',    ['Isekai','Fantasy']],
+  ['magic school',     ['Academy','Fantasy','Magic']],
+  ['magic academy',    ['Academy','Fantasy','Magic']],
+  ['awakening ceremony',['System','School','Fantasy','Hunter']],
+  ['level up',         ['System','Game Elements']],
+  ['time travel',      ['Time Travel','Regression']],
+  ['second chance',    ['Regression','Reincarnation']],
+  ['op mc',            ['Overpowered Main Character']],
+  ['overpowered mc',   ['Overpowered Main Character']],
+  ['martial arts',     ['Martial Arts']],
+  ['slice of life',    ['Slice of Life']],
+  ['female lead',      ['Female Protagonist']],
+  ['female protagonist',['Female Protagonist']],
+  ['dark fantasy',     ['Dark Fantasy']],
+  ['virtual reality',  ['Virtual Reality']],
+  ['post-apocalyptic', ['Post-Apocalyptic']],
+  ['arranged marriage',['Arranged Marriage','Romance']],
+  ['kingdom building', ['Kingdom Building','Historical']],
+];
+
+const FIELDS = `
+  id title { english romaji }
+  coverImage { extraLarge large }
+  description(asHtml: false)
+  genres averageScore popularity status chapters countryOfOrigin
+  startDate { year }
+  tags { name rank isMediaSpoiler }
+`;
+
+// Maps TAGS display name → exact AniList tag name when they differ.
+// null = no AniList tag exists → fall back to text search.
+const TAG_ANILIST_NAME = {
+  'School':                   'School Life',
+  'Academy':                  'School Life',
+  'Vampires':                 'Vampire',
+  'Zombies':                  'Zombie',
+  'Monsters':                 'Monster',
+  'Assassins':                'Assassin',
+  'Dragons':                  'Dragon',
+  'Sword & Magic':             null,   // doesn't exist — use text search
+  'Mana':                      null,   // doesn't exist — use text search
+  'Hunter':                    null,   // use text search "hunter"
+  'Guild':                    'Guild',
+  'Second Chance':             null,
+  'Non-Human Protagonist':    'Non-Human Protagonist',
+  'Genius Protagonist':        null,   // use text search
+  'Anti-Hero':                 null,
+  'Office Workers':           'Office Lady',
+  'Arranged Marriage':        'Arranged Marriage',
+  'Kingdom Building':         'Kingdom Building',
+  'Game Elements':            'Video Games',
+  'Superpower':               'Super Power',
+};
+
+// Resolved at runtime by fetching AniList's real tag collection
+let _validAniListTags = null; // null = not yet fetched; Set = fetched
+
+async function loadAniListTags() {
+  if (_validAniListTags !== null) return;
+  try {
+    const d = await gql(`query{MediaTagCollection{name}}`);
+    _validAniListTags = new Set((d.MediaTagCollection || []).map(t => t.name));
+  } catch(e) {
+    _validAniListTags = new Set(); // failed — allow all through
+  }
+}
+
+// Resolve a display tag name to the correct AniList tag name (or null)
+function resolveAniListTag(displayName) {
+  if (displayName in TAG_ANILIST_NAME) return TAG_ANILIST_NAME[displayName];
+  // If we have the live list, use it to validate
+  if (_validAniListTags && _validAniListTags.size > 0) {
+    return _validAniListTags.has(displayName) ? displayName : null;
+  }
+  return displayName; // optimistically pass through if not yet validated
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  STATE  — loads from localStorage, migrates old keys automatically
+// ═══════════════════════════════════════════════════════════════════
+
+const EMPTY_STATE = () => ({
+  library:{ reading:[], planToRead:[], completed:[] },
+  prefs:{ liked:[], disliked:[] },
+  ratings:{}, updates:{}, lastUpdateCheck:0
+});
+
+let S = (() => {
+  // Try current key, then migrate from older versions
+  const KEYS = [STORE, 'mangavault_v2', 'mangavault_v1', 'mangavault_data'];
+  for (const key of KEYS) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      // Ensure all expected keys exist (handles partial saves from old versions)
+      const base = EMPTY_STATE();
+      const merged = {
+        library: { ...base.library, ...parsed.library },
+        prefs:   { ...base.prefs,   ...parsed.prefs   },
+        ratings:         parsed.ratings         || {},
+        updates:         parsed.updates         || {},
+        lastUpdateCheck: parsed.lastUpdateCheck || 0,
+      };
+      // Migrate to current key if loaded from an older one
+      if (key !== STORE) {
+        localStorage.setItem(STORE, JSON.stringify(merged));
+        localStorage.removeItem(key);
+      }
+      return merged;
+    } catch(e) {}
+  }
+  return EMPTY_STATE();
+})();
+
+function save() { localStorage.setItem(STORE, JSON.stringify(S)); updateNavCount(); }
+
+// In-memory manga cache for lookups
+const CACHE = {};
+function cache(list) { (list||[]).forEach(m => { if(m?.id) CACHE[m.id]=m; }); }
+function find(id) { return CACHE[id] || [...S.library.reading,...S.library.planToRead,...S.library.completed].find(m=>m.id===id); }
+
+// ═══════════════════════════════════════════════════════════════════
+//  ANILIST API
+// ═══════════════════════════════════════════════════════════════════
+
+async function gql(query, vars={}) {
+  const r = await fetch(ANILIST, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body: JSON.stringify({query, variables:vars})
+  });
+  const d = await r.json();
+  if (d.errors) throw new Error(d.errors[0].message);
+  return d.data;
+}
+
+async function getTrending() {
+  const d = await gql(`query{Page(perPage:20){media(sort:TRENDING_DESC,type:MANGA){${FIELDS}}}}`);
+  return d.Page.media;
+}
+
+async function getHiddenGems() {
+  const d = await gql(`query{Page(perPage:20){media(type:MANGA,sort:SCORE_DESC,averageScore_greater:76,popularity_lesser:18000,status_in:[RELEASING,FINISHED]){${FIELDS}}}}`);
+  return d.Page.media;
+}
+
+async function getTopRanked() {
+  const d = await gql(`query{Page(perPage:50){media(type:MANGA,sort:SCORE_DESC,averageScore_greater:78){${FIELDS}}}}`);
+  return d.Page.media;
+}
+
+async function searchAniList(term, genres, country, extraTags=[]) {
+  const VALID_GENRES  = new Set(GENRES.map(g => g.name));
+  const VALID_TAGS_SET = new Set(TAGS.map(t => t.name));
+  const descMode      = isDescriptionMode(term);
+
+  // Auto-detect country from keywords
+  let detectedCountry = country;
+  const lowerTerm = term.toLowerCase();
+  if (detectedCountry === 'all' || !detectedCountry) {
+    if (lowerTerm.includes('manhwa'))  detectedCountry = 'KR';
+    else if (lowerTerm.includes('manhua')) detectedCountry = 'CN';
+  }
+
+  // Always extract NL tags/genres from the full term
+  const nlAll      = parseNL(term);
+  const nlGenres   = nlAll.filter(x => VALID_GENRES.has(x));
+  const nlTags     = nlAll.filter(x => !VALID_GENRES.has(x) && VALID_TAGS_SET.has(x));
+  const queryGenres = [...new Set([...genres, ...nlGenres])].filter(g => VALID_GENRES.has(g));
+  const queryTags   = [...new Set([...extraTags, ...nlTags])];
+
+  // Build a clean title search term using stop-word extraction
+  let cleanKeywords = extractSearchTerms(
+    term.replace(/\b(manhwa|manhua|manga)\b/gi, '')
+  );
+  // Remove words already covered by NL_MAP (not useful as title search)
+  const nlKeys = new Set(Object.keys(NL_MAP));
+  cleanKeywords = cleanKeywords.filter(w => !nlKeys.has(w));
+  const clean = cleanKeywords.slice(0, 3).join(' ').trim();
+
+  // ── Strategy A: title search (when meaningful keywords remain) ──
+  let titleResults = [];
+  if (clean.length >= 2) {
+    try {
+      titleResults = await _runAniListQuery(clean, queryGenres, queryTags, detectedCountry, 30);
+    } catch(e) {}
+  }
+
+  // ── Strategy B: tag/genre-only search ──
+  // Always run in description mode, or as fallback when title returns few results
+  let tagResults = [];
+  if ((queryGenres.length || queryTags.length) && (descMode || titleResults.length < 10)) {
+    try {
+      tagResults = await _runAniListQuery('', queryGenres, queryTags, detectedCountry, 50);
+    } catch(e) {}
+  }
+
+  // ── Strategy C: if both searches are sparse, try WITHOUT country filter ──
+  let broadResults = [];
+  const combined1 = [...titleResults, ...tagResults];
+  if (combined1.length < 5 && (queryGenres.length || queryTags.length) && detectedCountry && detectedCountry !== 'all') {
+    try {
+      broadResults = await _runAniListQuery('', queryGenres, queryTags, null, 40);
+    } catch(e) {}
+  }
+
+  // Merge, title results first, deduplicate by id
+  const seen = new Set(titleResults.map(m => m.id));
+  const addUnique = (arr) => arr.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
+  return [...titleResults, ...addUnique(tagResults), ...addUnique(broadResults)];
+}
+
+async function _runAniListQuery(searchTerm, queryGenres, queryTags, detectedCountry, perPage=40) {
+  // Resolve display tag names → AniList real names; collect invalid ones for text fallback
+  const resolvedTags = [];
+  const textFallbacks = [];
+  for (const t of queryTags) {
+    const resolved = resolveAniListTag(t);
+    if (resolved) resolvedTags.push(resolved);
+    else textFallbacks.push(t.toLowerCase()); // use as keyword search
+  }
+
+  // If no text term but we have invalid tags, use the first one as a text search
+  let effectiveSearch = searchTerm;
+  if (!effectiveSearch && textFallbacks.length) {
+    effectiveSearch = textFallbacks[0];
+  }
+
+  const params = ['$type:MediaType','$perPage:Int'];
+  const args   = ['type:$type','sort:[POPULARITY_DESC,SCORE_DESC]'];
+  const vars   = { type:'MANGA', perPage };
+
+  if (effectiveSearch && effectiveSearch.length >= 2)  { params.push('$search:String');  args.push('search:$search');      vars.search  = effectiveSearch; }
+  if (queryGenres.length)                              { params.push('$genres:[String]'); args.push('genre_in:$genres');    vars.genres  = queryGenres.slice(0,3); }
+  if (resolvedTags.length)                             { params.push('$tags:[String]');   args.push('tag_in:$tags');        vars.tags    = resolvedTags.slice(0,5); }
+  if (detectedCountry && detectedCountry!=='all')      { params.push('$co:CountryCode');  args.push('countryOfOrigin:$co'); vars.co      = detectedCountry; }
+  if (!effectiveSearch && !queryGenres.length && !resolvedTags.length) return [];
+
+  const q = `query(${params.join(',')}){Page(perPage:$perPage){media(${args.join(',')}){${FIELDS}}}}`;
+  const d = await gql(q, vars);
+  return d.Page.media || [];
+}
+
+async function getRecommendations() {
+  const all = [...S.library.reading,...S.library.planToRead,...S.library.completed];
+  const libIds = all.map(m=>m.id);
+
+  const genreFreq = {};
+  [...all.flatMap(m=>m.genres||[]), ...S.prefs.liked].forEach(g => { genreFreq[g]=(genreFreq[g]||0)+1; });
+  const topGenres = Object.entries(genreFreq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+  if (!topGenres.length) return [];
+
+  const d = await gql(`query($genres:[String]){Page(perPage:25){media(type:MANGA,genre_in:$genres,sort:[SCORE_DESC],averageScore_greater:70){${FIELDS}}}}`, {genres:topGenres});
+
+  return d.Page.media
+    .filter(m => !libIds.includes(m.id))
+    .filter(m => !(m.genres||[]).some(g=>S.prefs.disliked.includes(g)))
+    .slice(0,8)
+    .map(m => ({...m, _reason: buildReason(m, topGenres, all)}));
+}
+
+function buildReason(m, topGenres, myLib) {
+  const shared = (m.genres||[]).filter(g=>topGenres.includes(g));
+  if (shared.length) return `💡 Matches your love of ${shared.slice(0,2).join(' & ')}`;
+  if (m.averageScore>=85) return `⭐ Critically acclaimed — ${m.averageScore}/100 community score`;
+  return `🔥 Highly ranked in the community`;
+}
+
+function parseNL(text) {
+  const lower = text.toLowerCase();
+  const out   = new Set();
+  // Multi-word phrases first (higher specificity)
+  NL_PHRASES.forEach(([phrase, tags]) => { if (lower.includes(phrase)) tags.forEach(t => out.add(t)); });
+  // Single-word NL_MAP
+  Object.entries(NL_MAP).forEach(([kw, tags]) => { if (lower.includes(kw)) tags.forEach(t => out.add(t)); });
+  // Exact AniList genre names
+  GENRES.forEach(g => { if (lower.includes(g.name.toLowerCase())) out.add(g.name); });
+  return [...out];
+}
+
+// Detect whether input looks like a description vs a title
+// Description: 4+ words, OR contains a verb/stop word pattern
+function isDescriptionMode(text) {
+  const words = text.trim().split(/\s+/);
+  if (words.length >= 4) return true;
+  // Short but clearly descriptive (contains stop words)
+  return words.some(w => STOP_WORDS.has(w.toLowerCase()));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MANGADEX API — broader database, catches titles AniList misses
+// ═══════════════════════════════════════════════════════════════════
+
+async function searchMangaDex(term) {
+  if (!term || term.length < 2) return [];
+  try {
+    const url = `https://api.mangadex.org/manga?title=${encodeURIComponent(term)}&limit=25&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic&order[relevance]=desc`;
+    const r = await fetch(url, { headers:{ Accept:'application/json' } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    if (d.result !== 'ok') return [];
+    return (d.data || []).map(normalizeMangaDex).filter(Boolean);
+  } catch(e) { return []; }
+}
+
+function normalizeMangaDex(m) {
+  try {
+    const a = m.attributes;
+    // Pick best English title
+    const t = a.title?.en || a.title?.['en-us'] || Object.values(a.title||{})[0] || 'Unknown';
+    const altEn = (a.altTitles||[]).find(x=>x.en)?.en || null;
+
+    const coverRel = (m.relationships||[]).find(r=>r.type==='cover_art');
+    const coverFile = coverRel?.attributes?.fileName;
+    const coverUrl = coverFile ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.256.jpg` : null;
+
+    const statusMap  = { ongoing:'RELEASING', completed:'FINISHED', hiatus:'HIATUS', cancelled:'CANCELLED' };
+    const countryMap = { ko:'KR', zh:'CN', 'zh-hk':'CN', 'zh-ro':'CN', ja:'JP', 'ja-ro':'JP' };
+
+    const genres = (a.tags||[]).filter(t=>t.attributes?.group==='genre').map(t=>t.attributes?.name?.en).filter(Boolean);
+    const themes = (a.tags||[]).filter(t=>t.attributes?.group==='theme').map(t=>t.attributes?.name?.en).filter(Boolean);
+    const desc   = a.description?.en || Object.values(a.description||{})[0] || '';
+
+    return {
+      id: `md_${m.id}`,
+      _source: 'mangadex',
+      title: { english: t, romaji: altEn },
+      coverImage: { large: coverUrl, extraLarge: coverUrl },
+      description: desc,
+      genres,
+      tags: themes.map(n=>({ name:n, rank:70, isMediaSpoiler:false })),
+      averageScore: null,
+      popularity: null,
+      status: statusMap[a.status] || 'RELEASING',
+      chapters: parseInt(a.lastChapter) || null,
+      countryOfOrigin: countryMap[a.originalLanguage] || 'JP',
+      startDate: { year: a.year },
+    };
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  JIKAN API (MyAnimeList) — massive database, great for older titles
+// ═══════════════════════════════════════════════════════════════════
+
+async function searchJikan(term) {
+  if (!term || term.length < 2) return [];
+  try {
+    const url = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(term)}&limit=20&order_by=relevance&sort=desc`;
+    const r = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.data || []).map(normalizeJikan).filter(Boolean);
+  } catch(e) { return []; }
+}
+
+function normalizeJikan(m) {
+  try {
+    const statusMap = { 'Publishing':'RELEASING','Finished':'FINISHED','On Hiatus':'HIATUS','Discontinued':'CANCELLED','Not yet published':'NOT_YET_RELEASED' };
+    const typeMap   = { 'Manhwa':'KR','Manhua':'CN' };
+    const genres = [...(m.genres||[]),...(m.themes||[]),...(m.demographics||[])].map(g=>g.name).filter(Boolean);
+    const coverUrl = m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || null;
+    const year = m.published?.from ? new Date(m.published.from).getFullYear() : null;
+    return {
+      id: `mal_${m.mal_id}`,
+      _source: 'mal',
+      title: { english: m.title_english || m.title, romaji: (m.title !== m.title_english) ? m.title : null },
+      coverImage: { large: coverUrl, extraLarge: coverUrl },
+      description: m.synopsis || '',
+      genres: genres.slice(0,10),
+      tags: [],
+      averageScore: m.score ? Math.round(m.score * 10) : null,
+      popularity: m.popularity,
+      status: statusMap[m.status] || 'RELEASING',
+      chapters: m.chapters || null,
+      countryOfOrigin: typeMap[m.type] || 'JP',
+      startDate: { year },
+    };
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  KITSU API — 4th search source
+// ═══════════════════════════════════════════════════════════════════
+
+async function searchKitsu(term) {
+  if (!term || term.length < 2) return [];
+  try {
+    const url = `https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(term)}&page[limit]=15&include=categories`;
+    const r = await fetch(url, { headers: { Accept: 'application/vnd.api+json', 'Content-Type': 'application/vnd.api+json' } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return (d.data || []).map(normalizeKitsu).filter(Boolean);
+  } catch(e) { return []; }
+}
+
+function normalizeKitsu(m) {
+  try {
+    const a = m.attributes;
+    const statusMap  = { current:'RELEASING', finished:'FINISHED', tba:'NOT_YET_RELEASED', unreleased:'NOT_YET_RELEASED', upcoming:'NOT_YET_RELEASED' };
+    const subtypeMap = { manhwa:'KR', manhua:'CN' };
+    const coverUrl   = a.coverImage?.large || a.posterImage?.large || a.posterImage?.original || null;
+    const year       = a.startDate ? new Date(a.startDate).getFullYear() : null;
+    const t          = a.titles?.en || a.titles?.en_us || a.canonicalTitle || 'Unknown';
+    const altTitle   = a.canonicalTitle !== t ? a.canonicalTitle : null;
+    return {
+      id: `kitsu_${m.id}`,
+      _source: 'kitsu',
+      title: { english: t, romaji: altTitle },
+      coverImage: { large: coverUrl, extraLarge: coverUrl },
+      description: a.synopsis || '',
+      genres: [],
+      tags: [],
+      averageScore: a.averageRating ? Math.round(parseFloat(a.averageRating)) : null,
+      popularity: a.popularityRank,
+      status: statusMap[a.status] || 'RELEASING',
+      chapters: a.chapterCount || null,
+      countryOfOrigin: subtypeMap[a.subtype?.toLowerCase()] || 'JP',
+      startDate: { year },
+    };
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════
+
+const title  = m => m.title?.english || m.title?.romaji || 'Unknown';
+const cover  = m => m.coverImage?.extraLarge || m.coverImage?.large || null;
+const sLabel = s => ({RELEASING:'Ongoing',FINISHED:'Completed',HIATUS:'Hiatus',CANCELLED:'Cancelled',NOT_YET_RELEASED:'Upcoming'}[s]||s||'?');
+const tLabel = c => ({JP:'Manga',KR:'Manhwa',CN:'Manhua'}[c]||'Manga');
+const score  = m => m.averageScore ? `⭐ ${(m.averageScore/10).toFixed(1)}` : '';
+
+// Art style: check for Full Color tag
+function getArtStyle(m) {
+  const tags = m.tags || [];
+  if (tags.some(t => /full.?colou?r/i.test(t.name))) return { label:'Full Color', cls:'badge-color', icon:'🎨' };
+  // Korean webtoon-format manhwa are typically full color
+  if (m.countryOfOrigin === 'KR' && (m.popularity || 0) > 500) return { label:'Full Color', cls:'badge-color', icon:'🎨' };
+  return { label:'Black & White', cls:'badge-bw', icon:'⬛' };
+}
+
+// English availability
+function getEnglishInfo(m) {
+  if (m._englishAvailable === true)  return { label:'English Available', cls:'badge-en', icon:'🇬🇧' };
+  if (m._englishAvailable === false) return null;
+  // Assume available if has a meaningful score (well-known title)
+  if (m.averageScore && m.averageScore >= 60) return { label:'English Available', cls:'badge-en', icon:'🇬🇧' };
+  return null;
+}
+
+// Fetch similar manga for the detail modal
+async function fetchSimilar(m) {
+  const numId = parseInt(m.id);
+  const isAniList = !isNaN(numId) && !String(m.id).includes('_');
+
+  // Try AniList built-in recommendations first
+  if (isAniList) {
+    try {
+      const SLIM = `id title{english romaji} coverImage{large} genres averageScore status countryOfOrigin`;
+      const d = await gql(
+        `query($id:Int){Media(id:$id,type:MANGA){recommendations(perPage:8){nodes{mediaRecommendation{${SLIM}}}}}}`,
+        { id: numId }
+      );
+      const recs = (d.Media?.recommendations?.nodes || [])
+        .map(n => n.mediaRecommendation).filter(Boolean);
+      if (recs.length >= 3) return recs.slice(0, 6);
+    } catch(e) {}
+  }
+
+  // Fall back to genre-based query
+  const VALID = new Set(GENRES.map(g => g.name));
+  const genres = (m.genres || []).filter(g => VALID.has(g)).slice(0, 3);
+  if (!genres.length) return [];
+  try {
+    const SLIM = `id title{english romaji} coverImage{large} genres averageScore status countryOfOrigin`;
+    const d = await gql(
+      `query($g:[String],$ex:Int){Page(perPage:8){media(type:MANGA,genre_in:$g,sort:[POPULARITY_DESC],averageScore_greater:65,id_not:$ex){${SLIM}}}}`,
+      { g: genres, ex: isAniList ? numId : 0 }
+    );
+    return (d.Page.media || []).slice(0, 6);
+  } catch(e) { return []; }
+}
+
+function isInLib(id) { return ['reading','planToRead','completed'].some(s=>S.library[s].some(m=>m.id===id)); }
+function libStatus(id){ for(const s of['reading','planToRead','completed']) if(S.library[s].some(m=>m.id===id)) return s; return null; }
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDERING — MANGA CARD
+// ═══════════════════════════════════════════════════════════════════
+
+function mangaCard(m) {
+  const c = cover(m);
+  const co = m.countryOfOrigin || 'JP';
+  const srcLabel = { mangadex:'MangaDex', mal:'MAL' };
+  const sourceBadge = m._source && srcLabel[m._source] ? `<span class="source-badge">${srcLabel[m._source]}</span>` : '';
+  const div = document.createElement('div');
+  div.className = 'manga-card';
+  div.onclick = () => openDetail(m);
+  div.innerHTML = `
+    <span class="type-badge type-${co}">${tLabel(co)}</span>
+    ${sourceBadge}
+    ${c ? `<img class="manga-cover" src="${c}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+    <div class="manga-cover-placeholder" style="${c?'display:none':''}">📖</div>
+    <div class="manga-info">
+      <div class="manga-title">${title(m)}</div>
+      <div class="manga-meta">
+        <span class="manga-score">${score(m)}</span>
+        <span class="status-badge status-${m.status||''}">${sLabel(m.status)}</span>
+      </div>
+    </div>`;
+  return div;
+}
+
+function renderGrid(items, containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  if (!items?.length) {
+    el.innerHTML = `<div class="empty"><span class="empty-icon">😔</span><div class="empty-title">No results found</div><div class="empty-sub">Try different keywords or genres</div></div>`;
+    return;
+  }
+  items.forEach(m => el.appendChild(mangaCard(m)));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDERING — LIBRARY
+// ═══════════════════════════════════════════════════════════════════
+
+function renderLibrary() {
+  ['reading','planToRead','completed'].forEach(status => {
+    const el   = document.getElementById(`lib-${status}`);
+    const cnt  = document.getElementById(`cnt-${status}`);
+    const items = S.library[status];
+    cnt.textContent = items.length;
+    el.innerHTML = '';
+
+    if (!items.length) {
+      const labels = {reading:'reading',planToRead:'planning to read',completed:'completed'};
+      const icons  = {reading:'📖',planToRead:'🔖',completed:'✅'};
+      el.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-icon">${icons[status]}</span><div class="empty-title">Nothing ${labels[status]} yet</div><div class="empty-sub">Browse & add manga to track your progress</div></div>`;
+      return;
+    }
+
+    items.forEach(m => {
+      CACHE[m.id] = m;
+      const c = cover(m);
+      const r = S.ratings[m.id] || 0;
+      const card = document.createElement('div');
+      card.className = 'lib-card';
+      card.id = `lc-${m.id}`;
+      card.innerHTML = `
+        ${c ? `<img class="lib-card-img" src="${c}" alt="" loading="lazy" onclick="openDetail(find('${m.id}'))" onerror="this.style.display='none'">` : `<div class="manga-cover-placeholder" onclick="openDetail(find('${m.id}'))">📖</div>`}
+        <div class="lib-card-body">
+          <div class="lib-card-title" onclick="openDetail(find('${m.id}'))">${title(m)}</div>
+          <div class="lib-card-actions">
+            <div class="stars" id="ls-${m.id}">
+              ${[1,2,3,4,5].map(i=>`<span class="star${i<=r?' active':''}" onclick="rateLib('${m.id}',${i})">★</span>`).join('')}
+            </div>
+            <button class="lib-del" onclick="removeFromLib('${m.id}')" title="Remove">🗑️</button>
+          </div>
+        </div>`;
+      el.appendChild(card);
+    });
+  });
+  updateNavCount();
+}
+
+function updateNavCount() {
+  const n = S.library.reading.length + S.library.planToRead.length + S.library.completed.length;
+  document.getElementById('nav-count').textContent = n;
+}
+
+function rateLib(id, rating) {
+  S.ratings[id] = rating;
+  save();
+  const el = document.getElementById(`ls-${id}`);
+  if (el) el.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('active', i<rating));
+}
+
+function removeFromLib(id) {
+  ['reading','planToRead','completed'].forEach(s => { S.library[s] = S.library[s].filter(m=>m.id!==id); });
+  save(); renderLibrary();
+  showToast('Removed from library','info');
+  setTimeout(() => refreshRecs(), 200);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  RENDERING — RECOMMENDATIONS
+// ═══════════════════════════════════════════════════════════════════
+
+function renderRecs(recs) {
+  const section = document.getElementById('rec-section');
+  const list    = document.getElementById('rec-list');
+  if (!recs?.length) { section.style.display='none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = '';
+  recs.slice(0,6).forEach(m => {
+    const c = cover(m);
+    const genres = (m.genres||[]).slice(0,3).map(g=>`<span class="genre-tag">${g}</span>`).join('');
+    const div = document.createElement('div');
+    div.className = 'rec-card';
+    div.onclick = () => openDetail(m);
+    div.innerHTML = `
+      ${c ? `<img class="rec-cover" src="${c}" alt="" loading="lazy">` : `<div class="rec-cover-ph">📖</div>`}
+      <div class="rec-info">
+        <div class="rec-title">${title(m)}</div>
+        <div class="rec-reason">${m._reason||'💡 Recommended for you'}</div>
+        <div class="rec-tags">${genres}</div>
+        <div class="rec-footer">
+          <span style="font-size:12px;color:var(--text-secondary)">${score(m)}</span>
+          <span class="status-badge status-${m.status}">${sLabel(m.status)}</span>
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddModal('${m.id}')">+ Add</button>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DETAIL MODAL
+// ═══════════════════════════════════════════════════════════════════
+
+function openDetail(m) {
+  if (!m) return;
+  CACHE[m.id] = m;
+  const c = cover(m);
+  const r = S.ratings[m.id] || 0;
+  const inLib = isInLib(m.id);
+  const ls = libStatus(m.id);
+  const lsLabel = {reading:'📖 Reading',planToRead:'🔖 Plan to Read',completed:'✅ Completed'};
+
+  const genres = (m.genres||[]).map(g=>`<span class="genre-tag">${g}</span>`).join('');
+  const topTags = (m.tags||[]).filter(t=>!t.isMediaSpoiler && t.rank>60).slice(0,5).map(t=>`<span class="genre-tag tag-cyan">${t.name}</span>`).join('');
+  const artStyle = getArtStyle(m);
+  const engInfo  = getEnglishInfo(m);
+
+  document.getElementById('modal-header').innerHTML = `
+    <div class="modal-header">
+      ${c ? `<img class="modal-cover" src="${c}" alt="" onerror="this.style.display='none'">` : `<div class="modal-cover-ph">📖</div>`}
+      <div class="modal-meta">
+        <div class="modal-title">${title(m)}</div>
+        ${m.title?.romaji && m.title.romaji !== title(m) ? `<div class="modal-subtitle">${m.title.romaji}</div>` : ''}
+        <div class="modal-tags">${genres}${topTags}</div>
+        <div class="modal-stats">
+          <div class="modal-stat"><div class="modal-stat-label">Score</div><div class="modal-stat-value" style="color:var(--warning)">${m.averageScore ? `⭐ ${(m.averageScore/10).toFixed(1)}/10` : 'N/A'}</div></div>
+          <div class="modal-stat"><div class="modal-stat-label">Status</div><div class="modal-stat-value"><span class="status-badge status-${m.status}">${sLabel(m.status)}</span></div></div>
+          <div class="modal-stat"><div class="modal-stat-label">Type</div><div class="modal-stat-value">${tLabel(m.countryOfOrigin)}</div></div>
+          ${m.chapters ? `<div class="modal-stat"><div class="modal-stat-label">Chapters</div><div class="modal-stat-value">${m.chapters}</div></div>` : ''}
+          ${m.startDate?.year ? `<div class="modal-stat"><div class="modal-stat-label">Year</div><div class="modal-stat-value">${m.startDate.year}</div></div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+          <span class="info-badge ${artStyle.cls}">${artStyle.icon} ${artStyle.label}</span>
+          ${engInfo ? `<span class="info-badge ${engInfo.cls}">${engInfo.icon} ${engInfo.label}</span>` : ''}
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Your Rating</div>
+          <div class="stars" id="modal-stars">
+            ${[1,2,3,4,5].map(i=>`<span class="star${i<=r?' active':''}" onclick="rateModal('${m.id}',${i})">★</span>`).join('')}
+          </div>
+        </div>
+        <div class="modal-actions">
+          ${inLib
+            ? `<button class="btn btn-secondary btn-sm">${lsLabel[ls]||'In Library'}</button>
+               <button class="btn btn-danger btn-sm" onclick="removeFromLib('${m.id}');closeDetailModal()">Remove</button>`
+            : `<button class="btn btn-primary" onclick="openAddModal('${m.id}')">+ Add to Library</button>`
+          }
+          <button class="btn btn-secondary btn-sm" onclick="closeDetailModal()">✕ Close</button>
+        </div>
+      </div>
+    </div>`;
+
+  const desc = m.description
+    ? m.description.replace(/<[^>]*>/g,'').replace(/&[#a-z0-9]+;/gi,' ').replace(/\s+/g,' ').trim().slice(0,900)+(m.description.length>900?'…':'')
+    : 'No description available.';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-body">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">Synopsis</div>
+      <div class="modal-description">${desc}</div>
+      <div class="modal-similar-wrap">
+        <div class="modal-similar-title">Similar Titles</div>
+        <div class="modal-similar-scroll" id="modal-similar">
+          <div style="color:var(--text-muted);font-size:13px;padding:20px 0;"><div class="spin" style="font-size:20px;">⏳</div></div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('manga-overlay').classList.remove('hidden');
+
+  // Load similar manga asynchronously
+  fetchSimilar(m).then(similar => {
+    const el = document.getElementById('modal-similar');
+    if (!el) return;
+    if (!similar?.length) { el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:10px 0;">No similar titles found</div>`; return; }
+    cache(similar);
+    el.innerHTML = '';
+    similar.forEach(s => {
+      const cv = cover(s);
+      const div = document.createElement('div');
+      div.className = 'sim-card';
+      div.onclick = () => openDetail(s);
+      div.innerHTML = `
+        ${cv ? `<img class="sim-cover" src="${cv}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+        <div class="sim-cover-ph" style="${cv?'display:none':''}">📖</div>
+        <div class="sim-title">${title(s)}</div>`;
+      el.appendChild(div);
+    });
+  });
+}
+
+function closeDetailModal(e) {
+  if (!e || e.target===document.getElementById('manga-overlay')) document.getElementById('manga-overlay').classList.add('hidden');
+}
+
+function rateModal(id, r) {
+  S.ratings[id] = r; save();
+  const el = document.getElementById('modal-stars');
+  if (el) el.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('active',i<r));
+  showToast(`Rated ${r}/5 ⭐`,'success');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  ADD TO LIBRARY MODAL
+// ═══════════════════════════════════════════════════════════════════
+
+let _addId = null, _addStatus = 'planToRead';
+
+function openAddModal(id) {
+  _addId = id;
+  _addStatus = 'planToRead';
+  const m = find(id);
+  document.getElementById('add-title-preview').textContent = m ? `"${title(m)}"` : '';
+  ['reading','planToRead','completed'].forEach(s => document.getElementById(`opt-${s}`).classList.remove('selected'));
+  document.getElementById('opt-planToRead').classList.add('selected');
+  document.getElementById('add-overlay').classList.remove('hidden');
+}
+
+function closeAddModal(e) {
+  if (!e || e.target===document.getElementById('add-overlay')) document.getElementById('add-overlay').classList.add('hidden');
+}
+
+function pickStatus(s) {
+  _addStatus = s;
+  ['reading','planToRead','completed'].forEach(x => document.getElementById(`opt-${x}`).classList.remove('selected'));
+  document.getElementById(`opt-${s}`).classList.add('selected');
+}
+
+function confirmAdd() {
+  if (!_addId) return;
+  const m = find(_addId);
+  if (!m) { showToast('Manga not found','error'); return; }
+  addToLib(m, _addStatus);
+  closeAddModal();
+}
+
+function addToLib(m, status='planToRead') {
+  // Remove from all slots first
+  ['reading','planToRead','completed'].forEach(s => { S.library[s] = S.library[s].filter(x=>x.id!==m.id); });
+
+  const item = {
+    id: m.id, title: m.title, coverImage: m.coverImage,
+    genres: m.genres, status: m.status, averageScore: m.averageScore,
+    countryOfOrigin: m.countryOfOrigin, chapters: m.chapters,
+    startDate: m.startDate, description: (m.description||'').slice(0,600),
+    tags: (m.tags||[]).slice(0,10),
+  };
+  S.library[status].push(item);
+  // Initialise update tracking for this manga immediately
+  if (!S.updates) S.updates = {};
+  if (!S.updates[m.id]) S.updates[m.id] = { lastChapters: m.chapters || 0, seen: true, timestamp: Date.now() };
+
+  save(); renderLibrary();
+  const labels={reading:'Reading',planToRead:'Plan to Read',completed:'Completed'};
+  showToast(`Added to ${labels[status]} 📚`,'success');
+  // Refresh recommendations so they reflect the new library state
+  setTimeout(() => refreshRecs(), 200);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════════════════════
+
+let _activeGenres = [], _activeTags = [], _typeFilter = 'all';
+
+async function doSearch() {
+  const term = document.getElementById('search-input').value.trim();
+  if (!term && !_activeGenres.length && !_activeTags.length) return;
+  const container = document.getElementById('search-results');
+  container.innerHTML = `<div class="loading" style="grid-column:1/-1"><div class="spin">⏳</div>Searching across all databases...</div>`;
+  try {
+    const hasText = term.length >= 2;
+
+    // For description-mode queries, extract the best keyword(s) for title-based sources
+    const descMode = hasText && isDescriptionMode(term);
+    const kwExtracted = descMode ? extractSearchTerms(
+      term.replace(/\b(manhwa|manhua|manga)\b/gi, '')
+    ).slice(0, 3).join(' ') : term;
+    const titleTerm = kwExtracted.length >= 2 ? kwExtracted : term;
+
+    const [aniRes, mdRes, malRes, kitsuRes] = await Promise.allSettled([
+      searchAniList(term, _activeGenres, _typeFilter, _activeTags),
+      hasText ? searchMangaDex(titleTerm) : Promise.resolve([]),
+      hasText ? searchJikan(titleTerm)    : Promise.resolve([]),
+      hasText ? searchKitsu(titleTerm)    : Promise.resolve([]),
+    ]);
+    const aniList   = aniRes.status   === 'fulfilled' ? (aniRes.value   || []) : [];
+    const mdList    = mdRes.status    === 'fulfilled' ? (mdRes.value    || []) : [];
+    const malList   = malRes.status   === 'fulfilled' ? (malRes.value   || []) : [];
+    const kitsuList = kitsuRes.status === 'fulfilled' ? (kitsuRes.value || []) : [];
+
+    // Merge: AniList first (richest data), then MangaDex, then MAL — dedup by normalized title
+    const normalize = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const seen = new Set(aniList.map(m => normalize(title(m))));
+    const dedup = list => list.filter(m => { const k = normalize(title(m)); if(seen.has(k)) return false; seen.add(k); return true; });
+    const mdUnique    = dedup(mdList);
+    const malUnique   = dedup(malList);
+    const kitsuUnique = dedup(kitsuList);
+
+    let combined = [...aniList, ...mdUnique, ...malUnique, ...kitsuUnique];
+    if (_typeFilter !== 'all') combined = combined.filter(m => m.countryOfOrigin === _typeFilter);
+
+    cache(combined);
+    renderGrid(combined, 'search-results');
+  } catch(e) {
+    container.innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-icon">❌</span><div class="empty-title">Search failed</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+function toggleGenrePill(genre, el) {
+  const i = _activeGenres.indexOf(genre);
+  if (i===-1) { _activeGenres.push(genre); el.classList.add('active'); }
+  else         { _activeGenres.splice(i,1); el.classList.remove('active'); }
+  if (_activeGenres.length || document.getElementById('search-input').value.trim()) doSearch();
+}
+
+function setTypeFilter(type, btn) {
+  _typeFilter = type;
+  document.querySelectorAll('[data-type]').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active');
+  if (document.getElementById('search-results').querySelector('.manga-card')) doSearch();
+}
+
+function buildSearchGenrePills() {
+  const c = document.getElementById('search-genre-pills');
+  c.innerHTML = '';
+  GENRES.forEach(g => {
+    const b = document.createElement('button');
+    b.className = 'pill'; b.textContent = `${g.emoji} ${g.name}`;
+    b.onclick = () => toggleGenrePill(g.name, b);
+    c.appendChild(b);
+  });
+}
+
+function buildSearchTagPills() {
+  const c = document.getElementById('search-tag-pills');
+  c.innerHTML = '';
+  TAGS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'pill'; b.textContent = `${t.emoji} ${t.name}`;
+    b.onclick = () => toggleTagPill(t.name, b);
+    c.appendChild(b);
+  });
+}
+
+function toggleTagPill(tag, el) {
+  const i = _activeTags.indexOf(tag);
+  if (i === -1) { _activeTags.push(tag); el.classList.add('active'); }
+  else           { _activeTags.splice(i,1); el.classList.remove('active'); }
+  if (_activeTags.length || _activeGenres.length || document.getElementById('search-input').value.trim()) doSearch();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TIER LISTS
+// ═══════════════════════════════════════════════════════════════════
+
+async function loadTierLists(source, btn) {
+  if (btn) {
+    document.querySelectorAll('#tab-tierlists .pill').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const c = document.getElementById('tier-content');
+  c.innerHTML = `<div class="loading"><div class="spin">⏳</div>Loading...</div>`;
+
+  if (source==='anilist') { await loadAniListRanked(c); return; }
+
+  const sub = source==='manhwa' ? 'manhwa' : 'manga';
+  try {
+    const r = await fetch(`https://www.reddit.com/r/${sub}/search.json?q=tier+list+manga&sort=top&t=year&limit=20&restrict_sr=1`);
+    const d = await r.json();
+    const posts = d?.data?.children?.map(p=>p.data).filter(p=>!p.stickied) || [];
+
+    if (!posts.length) {
+      c.innerHTML = `<div class="empty"><span class="empty-icon">📭</span><div class="empty-title">No tier lists found</div><div class="empty-sub">Try AniList Top Ranked instead</div></div>`;
+      return;
+    }
+
+    c.innerHTML = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Community tier list posts from r/${sub} — click to view the full post on Reddit</div><div class="tier-posts" id="tier-posts"></div>`;
+    const list = document.getElementById('tier-posts');
+    posts.forEach(p => {
+      const thumb = p.thumbnail?.startsWith('http') ? p.thumbnail : null;
+      const date  = new Date(p.created_utc*1000).toLocaleDateString();
+      const a = document.createElement('a');
+      a.className = 'tier-card';
+      a.href = `https://reddit.com${p.permalink}`;
+      a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.innerHTML = `
+        ${thumb ? `<img class="tier-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">` : `<div class="tier-thumb-ph">🏆</div>`}
+        <div>
+          <div class="tier-post-title">${p.title}</div>
+          <div class="tier-post-meta">
+            <span class="tier-sub">r/${sub}</span>
+            <span>u/${p.author}</span>
+            <span>${date}</span>
+            <span>⬆ ${p.score?.toLocaleString()}</span>
+            <span>💬 ${p.num_comments}</span>
+          </div>
+        </div>`;
+      list.appendChild(a);
+    });
+  } catch(e) {
+    c.innerHTML = `<div class="empty"><span class="empty-icon">🌐</span><div class="empty-title">Couldn't load Reddit posts</div><div class="empty-sub">Try AniList Top Ranked instead</div></div>`;
+  }
+}
+
+async function loadAniListRanked(container) {
+  try {
+    const manga = await getTopRanked();
+    cache(manga);
+    container.innerHTML = `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">AniList community rankings — click any title to view details or add to your library</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="ranked-list"></div>`;
+    const list = document.getElementById('ranked-list');
+    manga.forEach((m,i) => {
+      const c = cover(m);
+      const div = document.createElement('div');
+      div.className = 'rec-card'; div.onclick = () => openDetail(m);
+      div.innerHTML = `
+        <div style="width:36px;text-align:center;font-size:18px;font-weight:800;color:${i<3?'#f59e0b':i<10?'#94a3b8':'var(--text-muted)'};flex-shrink:0;align-self:center;">${i+1}</div>
+        ${c ? `<img class="rec-cover" src="${c}" alt="" loading="lazy" style="width:56px;height:84px;">` : `<div class="rec-cover-ph" style="width:56px;height:84px;font-size:20px;">📖</div>`}
+        <div class="rec-info">
+          <div class="rec-title">${title(m)}</div>
+          <div class="rec-tags">${(m.genres||[]).slice(0,3).map(g=>`<span class="genre-tag">${g}</span>`).join('')}</div>
+          <div class="rec-footer">
+            <span style="font-size:12px;font-weight:700;color:var(--warning)">⭐ ${m.averageScore ? (m.averageScore/10).toFixed(1) : '?'}/10</span>
+            <span class="status-badge status-${m.status}">${sLabel(m.status)}</span>
+            <span class="type-badge type-${m.countryOfOrigin||'JP'}" style="position:static;font-size:9px;">${tLabel(m.countryOfOrigin)}</span>
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openAddModal('${m.id}')">+ Add</button>
+          </div>
+        </div>`;
+      list.appendChild(div);
+    });
+  } catch(e) {
+    container.innerHTML = `<div class="empty"><span class="empty-icon">❌</span><div class="empty-title">Failed to load</div><div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BROWSE ALL (paginated discover sections)
+// ═══════════════════════════════════════════════════════════════════
+
+let _browseType = null, _browsePage = 1, _browseLoading = false;
+
+const BROWSE_META = {
+  trending: { title:'🔥 All Trending',   subtitle:'Full trending list — updated daily' },
+  gems:     { title:'💎 All Hidden Gems', subtitle:'High-scored titles with low popularity' },
+  recs:     { title:'✨ All Recommendations', subtitle:'Personalized picks based on your library & preferences' },
+};
+
+async function showBrowseAll(type) {
+  _browseType = type; _browsePage = 1; _browseLoading = false;
+
+  document.getElementById('discover-main').style.display = 'none';
+  document.getElementById('browse-all').style.display    = 'block';
+
+  const meta = BROWSE_META[type] || {};
+  document.getElementById('browse-title').textContent    = meta.title    || type;
+  document.getElementById('browse-subtitle').textContent = meta.subtitle || '';
+
+  const grid = document.getElementById('browse-grid');
+  grid.innerHTML = `<div class="loading" style="grid-column:1/-1"><div class="spin">⏳</div>Loading...</div>`;
+  document.getElementById('browse-footer').style.display = 'none';
+
+  const items = await fetchBrowsePage(type, 1);
+  cache(items);
+  grid.innerHTML = '';
+  items.forEach(m => grid.appendChild(mangaCard(m)));
+
+  const footer = document.getElementById('browse-footer');
+  footer.style.display = items.length >= 20 ? 'block' : 'none';
+  const btn = document.getElementById('browse-load-more');
+  btn.textContent = 'Load More'; btn.disabled = false;
+}
+
+async function loadMoreBrowse() {
+  if (_browseLoading) return;
+  _browseLoading = true;
+  _browsePage++;
+  const btn = document.getElementById('browse-load-more');
+  btn.textContent = 'Loading…'; btn.disabled = true;
+
+  try {
+    const items = await fetchBrowsePage(_browseType, _browsePage);
+    cache(items);
+    const grid = document.getElementById('browse-grid');
+    items.forEach(m => grid.appendChild(mangaCard(m)));
+    if (items.length < 20) document.getElementById('browse-footer').style.display = 'none';
+    else { btn.textContent = 'Load More'; btn.disabled = false; }
+  } catch(e) {
+    btn.textContent = 'Load More'; btn.disabled = false;
+    showToast('Failed to load more', 'error');
+  }
+  _browseLoading = false;
+}
+
+async function fetchBrowsePage(type, page) {
+  if (type === 'trending') {
+    const d = await gql(`query($p:Int){Page(page:$p,perPage:24){media(sort:TRENDING_DESC,type:MANGA){${FIELDS}}}}`, {p:page});
+    return d.Page.media;
+  }
+  if (type === 'gems') {
+    const d = await gql(`query($p:Int){Page(page:$p,perPage:24){media(type:MANGA,sort:SCORE_DESC,averageScore_greater:76,popularity_lesser:18000,status_in:[RELEASING,FINISHED]){${FIELDS}}}}`, {p:page});
+    return d.Page.media;
+  }
+  if (type === 'recs') {
+    const all    = [...S.library.reading,...S.library.planToRead,...S.library.completed];
+    const libIds = new Set(all.map(m=>m.id));
+    const freq   = {};
+    [...all.flatMap(m=>m.genres||[]),...S.prefs.liked].forEach(g=>{ freq[g]=(freq[g]||0)+1; });
+    const top = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>e[0]);
+    const genres = top.length ? top : ['Action','Fantasy','Romance'];
+    const d = await gql(`query($p:Int,$g:[String]){Page(page:$p,perPage:24){media(type:MANGA,genre_in:$g,sort:[SCORE_DESC],averageScore_greater:65){${FIELDS}}}}`, {p:page, g:genres});
+    return d.Page.media
+      .filter(m => !libIds.has(m.id))
+      .filter(m => !(m.genres||[]).some(g=>S.prefs.disliked.includes(g)));
+  }
+  return [];
+}
+
+function hideBrowseAll() {
+  document.getElementById('browse-all').style.display    = 'none';
+  document.getElementById('discover-main').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  PREFERENCES
+// ═══════════════════════════════════════════════════════════════════
+
+function renderPrefs() {
+  const all = [...GENRES, ...TAGS];
+  ['liked','disliked'].forEach(type => {
+    const c = document.getElementById(`pref-${type}`);
+    c.innerHTML = '';
+    all.forEach(g => {
+      const active = type==='liked' ? S.prefs.liked.includes(g.name) : S.prefs.disliked.includes(g.name);
+      const div = document.createElement('div');
+      div.className = `genre-item${active?' '+type:''}`;
+      div.onclick = () => togglePref(g.name, type, div);
+      div.innerHTML = `
+        <div class="genre-check">${active?(type==='liked'?'✓':'✕'):''}</div>
+        <span class="genre-emoji">${g.emoji}</span>
+        <span class="genre-name">${g.name}</span>`;
+      c.appendChild(div);
+    });
+  });
+  renderPrefStats();
+}
+
+function togglePref(genre, type, el) {
+  const arr = type==='liked' ? S.prefs.liked : S.prefs.disliked;
+  const i = arr.indexOf(genre);
+  if (i===-1) {
+    arr.push(genre);
+    el.classList.add(type);
+    el.querySelector('.genre-check').textContent = type==='liked'?'✓':'✕';
+  } else {
+    arr.splice(i,1);
+    el.classList.remove(type);
+    el.querySelector('.genre-check').textContent = '';
+  }
+  save(); renderPrefStats();
+}
+
+function renderPrefStats() {
+  const all = [...S.library.reading,...S.library.planToRead,...S.library.completed];
+  document.getElementById('pref-stats').innerHTML = `
+    📚 Total in library: <strong>${all.length}</strong><br>
+    💜 Liked genres: <strong>${S.prefs.liked.length ? S.prefs.liked.join(', ') : 'None set yet'}</strong><br>
+    🚫 Disliked genres: <strong>${S.prefs.disliked.length ? S.prefs.disliked.join(', ') : 'None'}</strong><br>
+    ⭐ Rated: <strong>${Object.keys(S.ratings).length} title${Object.keys(S.ratings).length!==1?'s':''}</strong>`;
+}
+
+function savePrefs() {
+  save();
+  showToast('Preferences saved! Refreshing recommendations…','success');
+  setTimeout(() => switchTab('discover'), 300);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  UPDATE NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════
+
+const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
+
+async function checkForUpdates(force = false) {
+  const allManga = [...S.library.reading, ...S.library.planToRead, ...S.library.completed];
+  if (!allManga.length) return;
+
+  const now = Date.now();
+  if (!force && S.lastUpdateCheck && (now - S.lastUpdateCheck) < UPDATE_INTERVAL) {
+    // Not time yet — just render any already-stored unseen updates
+    renderUpdatesBanner(); return;
+  }
+
+  if (!S.updates) S.updates = {};
+  const foundUpdates = [];
+
+  // ── AniList batch ──
+  const aniManga = allManga.filter(m => !String(m.id).includes('_'));
+  if (aniManga.length) {
+    try {
+      const ids = aniManga.map(m => parseInt(m.id));
+      const d   = await gql(
+        `query($ids:[Int]){Page(perPage:50){media(id_in:$ids,type:MANGA){id chapters status}}}`,
+        { ids }
+      );
+      const latest = {};
+      (d.Page.media || []).forEach(m => { latest[m.id] = m.chapters; });
+
+      aniManga.forEach(manga => {
+        const curr = latest[parseInt(manga.id)] ?? null;
+        const rec  = S.updates[manga.id];
+
+        if (rec === undefined) {
+          // First time — seed with current value, no alert
+          S.updates[manga.id] = { lastChapters: curr ?? manga.chapters ?? 0, seen: true, ts: now };
+        } else if (curr !== null && curr > (rec.lastChapters || 0) && (rec.lastChapters || 0) > 0) {
+          foundUpdates.push({ manga, prev: rec.lastChapters, curr });
+          S.updates[manga.id] = { lastChapters: curr, seen: false, ts: now };
+        } else {
+          S.updates[manga.id].ts = now;
+          if (curr) S.updates[manga.id].lastChapters = Math.max(S.updates[manga.id].lastChapters || 0, curr);
+        }
+      });
+    } catch(e) {}
+  }
+
+  // ── MangaDex batch ──
+  const mdManga = allManga.filter(m => String(m.id).startsWith('md_'));
+  if (mdManga.length) {
+    try {
+      const idList  = mdManga.map(m => m.id.replace('md_',''));
+      const params  = idList.map(id => `ids[]=${encodeURIComponent(id)}`).join('&');
+      const r       = await fetch(`https://api.mangadex.org/manga?${params}&limit=20`);
+      const d       = await r.json();
+      const latest  = {};
+      (d.data || []).forEach(m => { latest[`md_${m.id}`] = parseFloat(m.attributes?.lastChapter) || 0; });
+
+      mdManga.forEach(manga => {
+        const curr = latest[manga.id] ?? 0;
+        const rec  = S.updates[manga.id];
+
+        if (rec === undefined) {
+          S.updates[manga.id] = { lastChapters: curr || manga.chapters || 0, seen: true, ts: now };
+        } else if (curr > (rec.lastChapters || 0) && (rec.lastChapters || 0) > 0) {
+          foundUpdates.push({ manga, prev: rec.lastChapters, curr });
+          S.updates[manga.id] = { lastChapters: curr, seen: false, ts: now };
+        } else {
+          S.updates[manga.id].ts = now;
+          if (curr) S.updates[manga.id].lastChapters = Math.max(S.updates[manga.id].lastChapters || 0, curr);
+        }
+      });
+    } catch(e) {}
+  }
+
+  S.lastUpdateCheck = now;
+  save();
+
+  renderUpdatesBanner();
+  updateNotifDot();
+
+  if (foundUpdates.length > 0) {
+    showToast(`🔔 ${foundUpdates.length} manga in your library got new chapters!`, 'info');
+  }
+}
+
+function renderUpdatesBanner() {
+  if (!S.updates) return;
+  const allManga = [...S.library.reading, ...S.library.planToRead, ...S.library.completed];
+  const unseen   = allManga.filter(m => S.updates[m.id] && !S.updates[m.id].seen);
+
+  const banner   = document.getElementById('updates-banner');
+  const listEl   = document.getElementById('updates-list');
+  if (!banner || !listEl) return;
+
+  if (!unseen.length) { banner.style.display = 'none'; return; }
+
+  banner.style.display = 'block';
+  listEl.innerHTML = '';
+  unseen.slice(0, 10).forEach(manga => {
+    const rec = S.updates[manga.id];
+    const cv  = cover(manga);
+    const row = document.createElement('div');
+    row.className = 'update-row';
+    row.onclick = () => { openDetail(manga); };
+    row.innerHTML = `
+      ${cv ? `<img class="update-thumb" src="${cv}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+      <div class="update-thumb-ph" style="${cv?'display:none':''}">📖</div>
+      <div class="update-info">
+        <div class="update-title">${title(manga)}</div>
+        <div class="update-msg">📢 New chapter available${rec.lastChapters ? ` — now at ch. ${rec.lastChapters}` : ''}!</div>
+      </div>`;
+    listEl.appendChild(row);
+  });
+}
+
+function updateNotifDot() {
+  if (!S.updates) return;
+  const allManga = [...S.library.reading, ...S.library.planToRead, ...S.library.completed];
+  const hasUnseen = allManga.some(m => S.updates[m.id] && !S.updates[m.id].seen);
+  const dot = document.getElementById('nav-notif-dot');
+  if (dot) dot.style.display = hasUnseen ? 'inline-block' : 'none';
+}
+
+function markUpdatesAsSeen() {
+  if (!S.updates) return;
+  Object.keys(S.updates).forEach(id => { S.updates[id].seen = true; });
+  save();
+  renderUpdatesBanner();
+  updateNotifDot();
+  showToast('All updates marked as seen', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TAB NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  document.querySelector(`.nav-tab[data-tab="${name}"]`).classList.add('active');
+
+  if (name==='library')   { renderLibrary(); renderUpdatesBanner(); updateNotifDot(); }
+  if (name==='tierlists') loadTierLists('manga');
+  if (name==='prefs')     renderPrefs();
+  if (name==='discover') {
+    // Always return to main discover view when tab is clicked
+    document.getElementById('browse-all').style.display    = 'none';
+    document.getElementById('discover-main').style.display = 'block';
+    refreshRecs();
+  }
+}
+
+function switchLibTab(status, btn) {
+  document.querySelectorAll('.lib-tab').forEach(el=>el.classList.remove('active'));
+  btn.classList.add('active');
+  ['reading','planToRead','completed'].forEach(s => {
+    document.getElementById(`lib-${s}`).style.display = s===status ? 'grid' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════════
+
+let _toastT = null;
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  BACKUP & RESTORE
+// ═══════════════════════════════════════════════════════════════════
+
+function exportLibrary() {
+  try {
+    const payload = JSON.stringify(S, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `mangavault-backup-${date}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Backup exported! Keep it somewhere safe 💾', 'success');
+  } catch(e) {
+    showToast('Export failed: ' + e.message, 'error');
+  }
+}
+
+function importLibrary(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.library || typeof imported.library !== 'object') {
+        showToast('Invalid backup file — not a MangaVault backup', 'error'); return;
+      }
+      // Merge imported data into current state (imported takes priority)
+      const base = EMPTY_STATE();
+      S = {
+        library: { ...base.library, ...imported.library },
+        prefs:   { ...base.prefs,   ...imported.prefs   },
+        ratings:         imported.ratings         || {},
+        updates:         imported.updates         || {},
+        lastUpdateCheck: imported.lastUpdateCheck || 0,
+      };
+      save();
+      renderLibrary();
+      renderPrefs();
+      refreshRecs();
+      renderUpdatesBanner();
+      updateNotifDot();
+      event.target.value = ''; // reset input
+      const total = S.library.reading.length + S.library.planToRead.length + S.library.completed.length;
+      showToast(`Imported successfully — ${total} manga restored 📚`, 'success');
+    } catch(err) {
+      showToast('Import failed: file is corrupt or not valid JSON', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════
+
+async function refreshRecs() {
+  try { const r = await getRecommendations(); cache(r); renderRecs(r); } catch(e){}
+}
+
+async function loadDiscover() {
+  try { const t = await getTrending(); cache(t); renderGrid(t,'trending-grid'); } catch(e) {
+    document.getElementById('trending-grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-icon">❌</span><div class="empty-title">Failed to load</div><div class="empty-sub">Check your connection and reload</div></div>`;
+  }
+  try { const g = await getHiddenGems(); cache(g); renderGrid(g,'gems-grid'); } catch(e) {
+    document.getElementById('gems-grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><span class="empty-icon">❌</span><div class="empty-title">Failed to load</div></div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildSearchGenrePills();
+  buildSearchTagPills();
+  renderLibrary();
+  updateNavCount();
+  updateNotifDot();
+  loadDiscover();
+  refreshRecs();
+  // Fetch AniList's real tag list in the background (used to validate tag searches)
+  loadAniListTags();
+  // Check for library updates (rate-limited to once per hour)
+  setTimeout(() => checkForUpdates(), 3000);
+});
+</script>
+</body>
+</html>
